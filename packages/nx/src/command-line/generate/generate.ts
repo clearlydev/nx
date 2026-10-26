@@ -221,33 +221,27 @@ export function parseGeneratorString(value: string): {
 
 async function convertToGenerateOptions(
   generatorOptions: { [p: string]: any },
-  mode: 'generate' | 'new',
   projectsConfiguration?: ProjectsConfigurations
 ): Promise<GenerateOptions> {
   let collectionName: string | null = null;
   let generatorName: string | null = null;
   const interactive = generatorOptions.interactive as boolean;
 
-  if (mode === 'generate') {
-    const generatorDescriptor = generatorOptions['generator'] as string;
-    const { collection, generator } = parseGeneratorString(generatorDescriptor);
+  const generatorDescriptor = generatorOptions['generator'] as string;
+  const { collection, generator } = parseGeneratorString(generatorDescriptor);
 
-    if (collection) {
-      collectionName = collection;
-      generatorName = generator;
-    } else {
-      const generatorString = await promptForCollection(
-        generatorDescriptor,
-        interactive,
-        projectsConfiguration
-      );
-      const parsedGeneratorString = parseGeneratorString(generatorString);
-      collectionName = parsedGeneratorString.collection;
-      generatorName = parsedGeneratorString.generator;
-    }
+  if (collection) {
+    collectionName = collection;
+    generatorName = generator;
   } else {
-    collectionName = generatorOptions.collection as string;
-    generatorName = 'new';
+    const generatorString = await promptForCollection(
+      generatorDescriptor,
+      interactive,
+      projectsConfiguration
+    );
+    const parsedGeneratorString = parseGeneratorString(generatorString);
+    collectionName = parsedGeneratorString.collection;
+    generatorName = parsedGeneratorString.generator;
   }
 
   const res = {
@@ -324,11 +318,7 @@ export async function generate(args: { [k: string]: any }) {
         readProjectsConfigurationFromProjectGraph(projectGraph);
     }
 
-    const opts = await convertToGenerateOptions(
-      args,
-      'generate',
-      projectsConfigurations
-    );
+    const opts = await convertToGenerateOptions(args, projectsConfigurations);
 
     const {
       normalizedGeneratorName,
@@ -336,7 +326,6 @@ export async function generate(args: { [k: string]: any }) {
       implementationFactory,
       generatorConfiguration: {
         aliases,
-        hidden,
         ['x-deprecated']: deprecated,
         ['x-use-standalone-layout']: isStandalonePreset,
       },
