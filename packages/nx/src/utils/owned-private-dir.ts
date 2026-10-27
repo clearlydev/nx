@@ -312,6 +312,27 @@ export function isOwnedRealDirectory(dir: string): OwnedRealDir | null {
   }
 }
 
+/**
+ * Whether the entry `name` of `dir` can be acted on by a walk up from the cwd.
+ * In a world-writable directory (`/tmp`) anyone can create it, so it must be
+ * ours or root's. Elsewhere ownership is not checked, so checkouts owned by
+ * another uid keep working. `lstat` judges a symlink by who made it.
+ */
+export function isTrustedAncestorEntry(dir: string, name: string): boolean {
+  if (typeof process.getuid !== 'function') {
+    return true;
+  }
+  try {
+    if (!(statSync(dir).mode & 0o002)) {
+      return true;
+    }
+    const { uid } = lstatSync(join(dir, name));
+    return uid === process.getuid() || uid === 0;
+  } catch {
+    return false;
+  }
+}
+
 /** The path segment separating one user's Nx runtime state from another's. */
 export function getUserSegment(): string {
   try {
